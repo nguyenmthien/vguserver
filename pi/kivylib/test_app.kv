@@ -1,0 +1,211 @@
+# -*- coding: utf-8 -*-
+#:kivy 1.11.1
+#:include email.kv
+<DefaultLabel@Label>:
+    font_size: '24sp'
+    #color: (0.365, 0.678, 0.925, 1)
+    color: (0.122, 0.459, 0.996, 1)
+<DateTime>:
+    BoxLayout:    
+        orientation: 'horizontal'
+        TimeInfo:
+            text: self.now_time.text
+        DateInfo:
+            text: self.now_date.text
+
+<LockButton@Button>:
+    #id: screenshot
+    #text: 'X'
+    bold: True
+    font_size: '28sp'
+    color: (0,0,0,1)
+    #background_color: (1,0,0,1)
+    background_normal: "logout.png"
+    background_down: "logout.png"
+    #on_release: 
+        #app.root.current = 'login'
+        #app.root.transition.direction = 'right'
+
+<StatusBar>:
+    orientation: 'horizontal'
+    TimeInfo:
+        text: self.now_time.text
+    DefaultLabel:
+        text: 'VGU Server IoT Kit'
+        bold: True
+    DateInfo:
+        text: self.now_date.text
+    LockButton:
+        id: screenshot
+        size_hint_x: 0.30
+        on_release: root.doscreenshot()  
+        #size: (200,15)
+<LoginPage>:
+    FloatLayout:
+        DateTime:
+            size_hint: 1, 0.18
+            pos_hint: {"top": 1}
+        DefaultLabel:
+            size_hint: 1, 0.2
+            pos_hint: {"top": 0.85}
+            text: 'VGU Server IoT Kit'
+            bold: True
+            font_size: '32sp' 
+        FloatLayout:
+            Label:
+                size_hint: 0.5, 0.1
+                id: info
+                text: ''
+                markup: True
+                bold: True
+            TextInput:
+                id: username
+                hint_text: 'Username'
+                text: 'abc'
+                halign: 'center'
+                size_hint: 0.5, 0.1
+                pos_hint: {"center_x":0.5,"top":0.6}
+                font_size: '18sp'
+                focus: True
+                multiline: False
+                write_tab: False
+                on_text_validate: password.focus = True
+            TextInput:
+                id: password
+                hint_text: 'Password'
+                text: '123'
+                halign: 'center'
+                size_hint: 0.5, 0.1
+                pos_hint: {"center_x":0.5,"top":0.45}
+                multiline: False
+                font_size: '18sp'
+                password: True
+                write_tab: False
+                on_text_validate: root.check_login()
+            Button:
+                id: login_button
+                text: 'Log In'
+                size_hint: 0.5, 0.15
+                pos_hint: {"center_x":0.5,"top":0.2}
+                font_size: '18sp' 
+                on_release: root.check_login()
+            Label:
+
+<TaskbarButton@Button>:
+    font_size: 20
+    background_color: (1, .404, 0, 1)
+    background_normal: ''
+    #background_down: ''
+
+<BackgroundColor@Widget>
+    background_color: 1, 1, 1, 1
+    canvas.before:
+        Color:
+            rgba: root.background_color
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+<UnderInfo@Label+BackgroundColor>:
+    size_hint: 1, 0.05
+    pos_hint: {"center_x": 0.5, "y":0}
+    text: "Nguyen Minh Thien - Dang Van Phuoc - Le Huu Tuan Huy - Tran Gia Phuc - EEIT 2017"
+    font_size: '17sp'
+    #color: (0.365, 0.678, 0.925, 1)
+    background_color: (0.122, 0.459, 0.996, 1)
+    #background_normal: ''
+
+<Taskbar>:
+    size_hint_y: None
+    pos_hint: {"y":0.05}
+    orientation: 'horizontal'
+    TaskbarButton:
+        text: 'Home'
+        on_release: root.btn_home()
+    TaskbarButton:
+        text: 'Report'
+        on_release: root.btn_report()
+    TaskbarButton:
+        text: 'AC Control'
+        on_release: root.btn_ac()
+    TaskbarButton:
+        text: 'Email'
+        on_release: root.btn_email()
+    TaskbarButton:
+        text: 'Settings'
+        on_release: root.btn_settings()
+    TaskbarButton:
+        text: 'Log'
+        on_release: root.btn_log()
+<FFLabel@Label>:
+    font_size: "50sp"
+<Home>:
+    FloatLayout:
+        StatusBar:
+            size_hint: 1, 0.12
+            pos_hint: {"top": 1}
+        GridLayout:
+            size_hint: 1, 0.3
+            pos_hint: {"top": .8}
+            cols: 2
+            Label:
+                text: "Temperature"
+                font_size: "40sp"
+            Label:
+                text: "Humidity"
+                font_size: "40sp"
+        GridLayout:
+            size_hint: 1, 0.3
+            pos_hint: {"top": .7}
+            cols: 2
+            FFLabel:
+                text: "32°C"
+                color: (0.122, 0.459, 0.996, 1)
+            FFLabel:
+                text: "47% RH"
+                color: (0.122, 0.459, 0.996, 1)
+        Taskbar:
+            size: root.width, root.height/6
+        UnderInfo:
+
+<ACControl>:
+    FloatLayout:
+        StatusBar:
+            size_hint: 1, 0.12
+            pos_hint: {"top": 1}
+        Taskbar:
+            size: root.width, root.height/6
+        UnderInfo:
+<BoldLabel@Label>:
+    font_size: '22sp'
+    bold: True
+    color: (0.365, 0.678, 0.925, 1)
+
+<Setting>:
+    FloatLayout:
+        StatusBar:
+            size_hint: 1, 0.12
+            pos_hint: {"top": 1}
+        Taskbar:
+            size: root.width, root.height/6
+        UnderInfo:
+
+<Report>:
+    FloatLayout:
+        StatusBar:
+            size_hint: 1, 0.12
+            pos_hint: {"top": 1}
+        Taskbar:
+            size: root.width, root.height/6
+        UnderInfo:
+
+<Log>:
+    FloatLayout:
+        StatusBar:
+            size_hint: 1, 0.1
+            pos_hint: {"top": 1}
+        Taskbar:
+            size: root.width, root.height/6
+        UnderInfo:
+
+            

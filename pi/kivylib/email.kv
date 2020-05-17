@@ -1,0 +1,97 @@
+<SelectableLabel>:
+    # Draw a background to indicate selection
+    canvas.before:
+        Color:
+            rgba: (.0, 0.9, .1, .3) if self.selected else (0, 0, 0, 1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    #value: ''
+    font_size: '23sp'
+
+<Email>:
+    rv: rv
+    error_msg: error_msg
+    #email_spinner: email_spinner
+    FloatLayout:
+        #orientation: 'vertical'
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: 0.1
+            pos_hint: {"top": 1}
+            DefaultLabel:
+                text: "Email Configuration"
+                bold: True
+                font_size: '28sp'
+            LockButton:
+                size_hint_x: .08
+        BoxLayout:
+            pos_hint: {"top": .9}
+            size_hint_y: .1
+            orientation: 'horizontal'
+            TextInput:
+                id: email_input
+                hint_text: "Enter Email"
+                font_size: '23sp'
+                multiline: False
+                on_text_validate: 
+                    root.insert(email_input.text)
+                    email_input.text = ""
+            Button:
+                text: 'Add'
+                font_size: '23sp'
+                size_hint_x: .3
+                on_release: 
+                    root.insert(email_input.text)
+                    email_input.text = ""
+        RecycleView:
+            id: rv
+            #size_hint_y: .65
+            pos_hint: {"top": .8}
+            scroll_type: ['bars', 'content']
+            scroll_wheel_distance: dp(114)
+            bar_width: dp(20)
+            viewclass: 'SelectableLabel'
+            SRBL:
+                default_size: None, dp(45)
+                default_size_hint: 1, None
+                size_hint_y: None
+                height: self.minimum_height
+                orientation: 'vertical'
+                spacing: dp(2)
+                multiselect: True
+                touch_multiselect: True
+        BoxLayout:
+            pos_hint: {"top": .317}
+            size_hint_y: .1
+            Label:
+                id: error_msg
+                font_size: '23sp'
+                color: (1, 0, 0, 1)
+                bold: True
+            TextInput:
+                id: data_number
+                hint_text: 'Line'
+                size_hint_x: .15
+                font_size: '23sp'
+                disabled: True if email_spinner.text=='Email' else False
+                multiline: False
+            Spinner:
+                id: email_spinner
+                size_hint_x: .15
+                font_size: '23sp'
+                text: 'Data'
+                values: 'Data', 'Email'
+            Button:
+                text: "Send"
+                font_size: '23sp'
+                size_hint_x: .15
+                on_release: root.send(email_spinner.text, data_number.text)    
+            Button:
+                text: "Delete"
+                font_size: '23sp'
+                size_hint_x: .15
+                on_release: root.delete()  
+        Taskbar:
+            size: root.width, root.height/6
+        UnderInfo: 
