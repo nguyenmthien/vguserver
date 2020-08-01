@@ -3,14 +3,71 @@
 
 """TCP Server library"""
 
+import multiprocessing
+import queue
 import socket
 import select
 import time
 import getmac
 
+class LocalServer(object):
+    """This class is created for usage in multiprocessing of the main program"""
+    def __init__(self, tcp_queue:multiprocessing.Queue, port:int):
+        self.queue = tcp_queue
+        self.server = tcp_server(port)
+        self.thermal_update_interval = 300
+        self.allow_new_client_flag = False
+        self.new_client_name = ""
+
+    def server_loop(self):
+        """TCP server main loop, similiar with the code in if name == main"""
+        self.server.update_sockets_list()
+        try:
+            self.server.check_read_sockets()
+        except new_connection as msg:
+            print(msg, end="")
+            try:
+                self.server.new_socket_handler(self.thermal_update_interval)
+            except address_does_not_exist as arg:
+                if allow_new_client_flag:
+                    self.server.create_new_socket(arg.args[0], arg.args[1], self.new_client_name)
+                    print(f"[TCP] Created new socket with ID: {self.new_client_name}, address {arg.args[1][0]}")
+                    allow_new_client_flag = False
+                return
+            return
+        
+        message_list = self.server.recv_all()
+
+        if message_list != []:
+            print(message_list)
+            for dictionary in message_list:
+                print(dictionary['ID'], dictionary['Temp'], dictionary['Humid'])
+
+    def consumer(self):
+        """multiprocessing queue consumer"""
+        try:
+            msg = self.queue.get_nowait()
+            self.allow_new_client_flag = True
+            if msg[0] == "sleep_interval":
+                self.thermal_update_interval = msg[1]
+            if msg[0] == "change":
+                self.server.change_client_name(msg[1], msg[2])
+            if msg[0] == "remove":
+                self.server.remove_client(msg[1])
+            if msg[0] == "add":
+                self.allow_new_client_flag = True
+                self.new_client_name = msg[1]
+        except queue.Empty:
+            pass
+
+    def program(self):
+        """Complete program"""
+        while True:
+            self.consumer()
+            self.server_loop()
+
 class new_connection(Exception):
     """TCP: New connection detected"""
-    pass
 
 class address_does_not_exist(Exception):
     """TCP: Address does exist in dictionary"""
@@ -73,16 +130,16 @@ class tcp_server:
             if notified_socket == self.server_socket:
                 raise new_connection('New Connection')
 
-    def new_socket_handler(self):
+    def new_socket_handler(self, sleeptime):
         """New socket handler"""
         client_socket, client_address = self.server_socket.accept()
         client_mac = getmac.get_mac_address(ip = client_address[0], network_request=True)
         client_socket.setblocking(0)
         self.sockets_list.append(client_socket)
+        client_socket.send(bytes([sleeptime]))
         logic = True
         for mac in self.mac_list:
             if mac == client_mac:
-                client_socket.send(b"Welcome back!")
                 logic = False
                 try:
                     self.sockets_list.remove(self.socket_list_by_mac[mac])
@@ -126,7 +183,7 @@ class tcp_server:
                     if message is False:
                         self.sockets_list.remove(notified_socket)
                         continue
-                    elif message == None:
+                    elif message is None:
                         continue
                     message = message.strip()
                     try:
@@ -138,3 +195,40 @@ class tcp_server:
                         return_list = []
 
         return return_list
+
+    def remove_client(self, id):
+        pass
+
+    def change_client_name(self, id_old, id_new):
+        pass
+
+if __name__ == "__main__":
+    def main():
+        vguserver.update_sockets_list()
+        try:
+            vguserver.check_read_sockets()
+        except new_connection as msg:
+            print(msg, end='')
+            try:
+                vguserver.new_socket_handler(100)
+            except address_does_not_exist as arg:
+                id = input("Enter ID: ")
+                vguserver.create_new_socket(arg.args[0], arg.args[1], id)
+                print(f"Created socket with ID {id}, address {arg.args[1][0]}")
+                return
+            return
+
+        message_list = vguserver.recv_all()
+
+        if message_list != []:
+            print(message_list)
+            for dictionary in message_list:
+                print(dictionary['ID'], dictionary['Temp'], dictionary['Humid'])
+
+    vguserver = tcp_server(get_ip(), 2033)
+    print(f"Started TCP server at {get_ip()}:2033")
+    last_t = time.time()
+    
+    
+    while True:
+        main()
