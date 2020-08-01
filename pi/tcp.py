@@ -12,9 +12,9 @@ import getmac
 
 class LocalServer(object):
     """This class is created for usage in multiprocessing of the main program"""
-    def __init__(self, tcp_queue:multiprocessing.Queue, port:int):
+    def __init__(self, tcp_queue: multiprocessing.Queue, port: int):
         self.queue = tcp_queue
-        self.server = tcp_server(port)
+        self.server = tcp_server(get_ip(), port)
         self.thermal_update_interval = 300
         self.allow_new_client_flag = False
         self.new_client_name = ""
@@ -31,11 +31,12 @@ class LocalServer(object):
             except address_does_not_exist as arg:
                 if allow_new_client_flag:
                     self.server.create_new_socket(arg.args[0], arg.args[1], self.new_client_name)
-                    print(f"[TCP] Created new socket with ID: {self.new_client_name}, address {arg.args[1][0]}")
+                    print(f"[TCP] Created new socket")
+                    print(f"ID: {self.new_client_name}, address {arg.args[1][0]}")
                     allow_new_client_flag = False
                 return
             return
-        
+
         message_list = self.server.recv_all()
 
         if message_list != []:
@@ -76,56 +77,57 @@ class address_does_not_exist(Exception):
 
 def get_ip():
     """Find local IP of the current network interface, avoid 127.0.0.1"""
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         # doesn't even have to be reachable
-        s.connect(('10.255.255.255', 1))
-        IP = s.getsockname()[0]
+        sock.connect(('10.255.255.255', 1))
+        ip_addr = sock.getsockname()[0]
     except:
-        IP = '127.0.0.1'
+        ip_addr = '127.0.0.1'
     finally:
-        s.close()
-    return IP
+        sock.close()
+    return ip_addr
 
 
 def receive_message(client_socket):
     """Recive message from client_socket"""
     try:
         mess = client_socket.recv(1024)
-        if (not len(mess)):
+        if not len(mess):
             return False
         elif (len(mess) <= 2) or (mess == '\r\n'):
             return
         return mess
-    
+
     except:
         return False
 
 class tcp_server:
     """Create a TCP/IP Server"""
-    def __init__(self,IP,PORT):
-        self.IP = IP
-        self.PORT = PORT
+    def __init__(self, IP, PORT):
+        self.ip_addr = IP
+        self.port = PORT
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.setblocking(0)
-        self.server_socket.bind((self.IP, self.PORT))
+        self.server_socket.bind((self.ip_addr, self.port))
         self.server_socket.listen(5)
         self.sockets_list = [self.server_socket]
         self.socket_list_by_mac = {}
-        self.id_dict = {}
+        self.name_dict = {}
         self.msg = {}
         self.read_sockets = []
         self.write_sockets = []
         self.exception_sockets = []
         self.mac_list = []
-        
+
 
     def update_sockets_list(self):
         """Update sockets list to read_sockets, write_sockets, exception_sockets"""
-        self.read_sockets, self.write_sockets, self.exception_sockets = select.select(self.sockets_list, self.sockets_list, [], 0)
+        self.read_sockets, self.write_sockets, self.exception_sockets = select.select(
+            self.sockets_list, self.sockets_list, [], 0)
 
     def check_read_sockets(self):
-        """Handle new connection after updating socket lists"""    
+        """Handle new connection after updating socket lists"""
         for notified_socket in self.read_sockets:
             if notified_socket == self.server_socket:
                 raise new_connection('New Connection')
@@ -133,7 +135,7 @@ class tcp_server:
     def new_socket_handler(self, sleeptime):
         """New socket handler"""
         client_socket, client_address = self.server_socket.accept()
-        client_mac = getmac.get_mac_address(ip = client_address[0], network_request=True)
+        client_mac = getmac.get_mac_address(ip=client_address[0], network_request=True)
         client_socket.setblocking(0)
         self.sockets_list.append(client_socket)
         client_socket.send(bytes([sleeptime]))
@@ -145,23 +147,23 @@ class tcp_server:
                     self.sockets_list.remove(self.socket_list_by_mac[mac])
                 except ValueError:
                     pass
-                self.socket_list_by_mac[mac]=client_socket
+                self.socket_list_by_mac[mac] = client_socket
                 return
 
         if logic:
             raise address_does_not_exist(client_socket, client_address)
 
-    def create_new_socket(self, client_socket, client_address, id):
+    def create_new_socket(self, client_socket, client_address, name):
         """Create new TCP socket"""
-        client_mac = getmac.get_mac_address(ip = client_address[0], network_request=True)
-        self.id_dict[client_mac] = id
+        client_mac = getmac.get_mac_address(ip=client_address[0], network_request=True)
+        self.name_dict[client_mac] = name
         self.mac_list.append(client_mac)
         self.socket_list_by_mac[client_mac] = client_socket
-    
+
     def send_all(self, mess):
         """THIS FUNCTION IS WRONG"""
-        for key in self.id_dict:
-            if  (self.id_dict[key] != 'UPS') and (self.id_dict[key] != 'AC') and (key != self.server_socket):
+        for key in self.name_dict:
+            if  (self.name_dict[key] != 'UPS') and (self.name_dict[key] != 'AC') and (key != self.server_socket):
                 key.send(mess.encode('utf-8'))
 
     def therm_parsing(self, mess):
@@ -176,9 +178,9 @@ class tcp_server:
         return_list = []
         for notified_socket in self.read_sockets:
             if notified_socket != self.server_socket:
-                client_mac = getmac.get_mac_address(ip = notified_socket.getpeername()[0])
-                if self.id_dict[client_mac] != 'UPS':
-                    mess_dict = {'ID':self.id_dict[client_mac]}
+                client_mac = getmac.get_mac_address(ip=notified_socket.getpeername()[0])
+                if self.name_dict[client_mac] != 'UPS':
+                    mess_dict = {'ID':self.name_dict[client_mac]}
                     message = receive_message(notified_socket)
                     if message is False:
                         self.sockets_list.remove(notified_socket)
@@ -196,10 +198,10 @@ class tcp_server:
 
         return return_list
 
-    def remove_client(self, id):
+    def remove_client(self, name): # TODO: not done
         pass
 
-    def change_client_name(self, id_old, id_new):
+    def change_client_name(self, name_old, name_new): # TODO: not done
         pass
 
 if __name__ == "__main__":
@@ -212,9 +214,9 @@ if __name__ == "__main__":
             try:
                 vguserver.new_socket_handler(100)
             except address_does_not_exist as arg:
-                id = input("Enter ID: ")
-                vguserver.create_new_socket(arg.args[0], arg.args[1], id)
-                print(f"Created socket with ID {id}, address {arg.args[1][0]}")
+                name = input("Enter name: ")
+                vguserver.create_new_socket(arg.args[0], arg.args[1], name)
+                print(f"Created socket with name {name}, address {arg.args[1][0]}")
                 return
             return
 
@@ -228,7 +230,7 @@ if __name__ == "__main__":
     vguserver = tcp_server(get_ip(), 2033)
     print(f"Started TCP server at {get_ip()}:2033")
     last_t = time.time()
-    
-    
+
+
     while True:
         main()
