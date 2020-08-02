@@ -12,12 +12,18 @@ import getmac
 
 class LocalServer(object):
     """This class is created for usage in multiprocessing of the main program"""
-    def __init__(self, tcp_queue: multiprocessing.Queue, port: int):
-        self.queue = tcp_queue
+    def __init__(self,
+                 incoming_queue: multiprocessing.Queue,
+                 outgoing_queue: multiprocessing.Queue,
+                 port: int):
+        self.queue_incoming = incoming_queue
+        self.queue_outgoing = outgoing_queue
         self.server = tcp_server(get_ip(), port)
         self.thermal_update_interval = 300
         self.allow_new_client_flag = False
         self.new_client_name = ""
+        self.add_command_timeout = 60
+        self.time_since_add_command = time.time()
 
     def server_loop(self):
         """TCP server main loop, similiar with the code in if name == main"""
@@ -30,10 +36,14 @@ class LocalServer(object):
                 self.server.new_socket_handler(self.thermal_update_interval)
             except address_does_not_exist as arg:
                 if allow_new_client_flag:
+                    allow_new_client_flag = False
+                    duration = time.time() - self.time_since_add_command
+                    if duration > self.add_command_timeout:
+                        return
                     self.server.create_new_socket(arg.args[0], arg.args[1], self.new_client_name)
                     print(f"[TCP] Created new socket")
                     print(f"ID: {self.new_client_name}, address {arg.args[1][0]}")
-                    allow_new_client_flag = False
+                    self.queue_outgoing.put(self.server.name_dict)
                 return
             return
 
@@ -47,8 +57,10 @@ class LocalServer(object):
     def consumer(self):
         """multiprocessing queue consumer"""
         try:
-            msg = self.queue.get_nowait()
+            msg = self.queue_incoming.get_nowait()
             self.allow_new_client_flag = True
+            if msg[0] == "change_timeout":
+                self.add_command_timeout = msg[1]
             if msg[0] == "sleep_interval":
                 self.thermal_update_interval = msg[1]
             if msg[0] == "change":
@@ -58,6 +70,8 @@ class LocalServer(object):
             if msg[0] == "add":
                 self.allow_new_client_flag = True
                 self.new_client_name = msg[1]
+                self.time_since_add_command = time.time()
+
         except queue.Empty:
             pass
 
@@ -222,7 +236,7 @@ class tcp_server:
         """Send message to the air conditioner controlling client"""
         client_mac = self.mac_list[0]
         for key, value in self.name_dict.items():
-            if "AC" == value:
+            if value == "AC":
                 client_mac = key
                 break
         client_socket = self.socket_list_by_mac[client_mac]
@@ -230,28 +244,29 @@ class tcp_server:
 
 if __name__ == "__main__":
     def main():
-        vguserver.update_sockets_list()
+        """Main loop"""
+        VGU_SERVER.update_sockets_list()
         try:
-            vguserver.check_read_sockets()
+            VGU_SERVER.check_read_sockets()
         except new_connection as msg:
             print(msg, end='')
             try:
-                vguserver.new_socket_handler(100)
+                VGU_SERVER.new_socket_handler(100)
             except address_does_not_exist as arg:
                 name = input("Enter name: ")
-                vguserver.create_new_socket(arg.args[0], arg.args[1], name)
+                VGU_SERVER.create_new_socket(arg.args[0], arg.args[1], name)
                 print(f"Created socket with name {name}, address {arg.args[1][0]}")
                 return
             return
 
-        message_list = vguserver.recv_all()
+        message_list = VGU_SERVER.recv_all()
 
         if message_list != []:
             print(message_list)
             for dictionary in message_list:
                 print(dictionary['ID'], dictionary['Temp'], dictionary['Humid'])
 
-    vguserver = tcp_server(get_ip(), 2033)
+    VGU_SERVER = tcp_server(get_ip(), 2033)
     print(f"Started TCP server at {get_ip()}:2033")
     last_t = time.time()
 
