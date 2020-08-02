@@ -198,11 +198,35 @@ class tcp_server:
 
         return return_list
 
-    def remove_client(self, name): # TODO: not done
-        pass
+    def remove_client(self, name):
+        """Remove client form lists by name"""
+        client_mac = self.mac_list[0]
+        for key, value in self.name_dict.items():
+            if name == value:
+                client_mac = key
+                break
+        self.name_dict.pop(client_mac, None)
+        self.mac_list.remove(client_mac)
+        self.socket_list_by_mac.pop(client_mac, None)
 
-    def change_client_name(self, name_old, name_new): # TODO: not done
-        pass
+    def change_client_name(self, name_old, name_new):
+        """Rename a client from name_old to name_new"""
+        client_mac = self.mac_list[0]
+        for key, value in self.name_dict.items():
+            if name_old == value:
+                client_mac = key
+                break
+        self.name_dict[client_mac] = name_new
+
+    def send_ac_control(self, message):
+        """Send message to the air conditioner controlling client"""
+        client_mac = self.mac_list[0]
+        for key, value in self.name_dict.items():
+            if "AC" == value:
+                client_mac = key
+                break
+        client_socket = self.socket_list_by_mac[client_mac]
+        client_socket.send(message.encode(ascii))
 
 if __name__ == "__main__":
     def main():
