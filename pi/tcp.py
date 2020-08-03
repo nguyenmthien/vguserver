@@ -9,15 +9,18 @@ import socket
 import select
 import time
 import getmac
+from database import write_therm
 
 class LocalServer(object):
     """This class is created for usage in multiprocessing of the main program"""
     def __init__(self,
+                 database_name,
                  incoming_queue: multiprocessing.Queue,
                  outgoing_queue: multiprocessing.Queue,
                  port: int):
         self.queue_incoming = incoming_queue
         self.queue_outgoing = outgoing_queue
+        self.database_name = database_name
         self.server = tcp_server(get_ip(), port)
         self.thermal_update_interval = 300
         self.allow_new_client_flag = False
@@ -53,6 +56,7 @@ class LocalServer(object):
             print(message_list)
             for dictionary in message_list:
                 print(dictionary['ID'], dictionary['Temp'], dictionary['Humid'])
+                write_therm(self.database_name, dictionary['ID'], dictionary['Temp'], dictionary['Humid'])
 
     def consumer(self):
         """multiprocessing queue consumer"""
