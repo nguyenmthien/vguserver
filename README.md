@@ -18,13 +18,17 @@ git clone https://github.com/nguyenmthien/vguserver/
 For setting up the Python environment, the Kivy environment, the UART connection to the Raspberry Pi UPS and the Blynk server, please see the README file in /pi.
 
 ### Requirements
+ - Raspberry Pi 3 model B+ or later
+ - Raspberry Pi OS version May 2020 or later
  - [Python 3](https://python.org/)
- - [Kivy](https://kivy.org/)
-
-      ```bash
-      python -m pip install --user kivy
-      ```
-
+ - [Kivy](https://kivy.org/): 
+ See the instructions on [the official documentation](https://kivy.org/doc/stable/installation/installation-rpi.html)
+ - matplotlib, dotenv
+ 
+          ```bash
+          python -m pip install matplotlib dotenv
+          ``` 
+ 
 ## Usage
 
 ```bash
