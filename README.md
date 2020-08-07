@@ -25,9 +25,9 @@ For setting up the Python environment, the Kivy environment, the UART connection
  See the instructions on [the official documentation](https://kivy.org/doc/stable/installation/installation-rpi.html)
  - matplotlib, dotenv
  
-          ```bash
-          python -m pip install matplotlib dotenv
-          ``` 
+      ```bash
+      pip install matplotlib dotenv
+      ```
  
 ## Usage
 
