@@ -1,12 +1,20 @@
 # vguserver
 A VGU-funded project to monitor its main server room remotely.
 
+
 ## Overall descriptions
 The system is responsible for monitoring ambient data of the server room in several sampling points and other critical server room status, such as power condition.
 Remote monitoring, including changing the isolated air conditioner in the room can be done via an mobile phone application. 
 This system uses the Raspberry Pi as the main processor, and several ESP8266 microcontroller boards for data gathering. 
 Communication with the Android application is powered by the Blynk IoT platform.
 
+
+## Contributing members
+This project workload is divided between:
+ + [Minh Thien](https://github.com/nguyenmthien)
+ + [Tuan Huy](https://github.com/tuanhuy180903)
+ + [Gia Phuc](https://github.com/trgiaphuc99)
+ + [Van Phuoc](https://github.com/PhuocDang0111)
 
 ## Installation
 You can download this project directly via the GitHub web link, or clone using git:
