@@ -40,7 +40,7 @@ For setting up the Python environment, the Kivy environment, the UART connection
 ## Usage
 
 ```bash
-python main.py
+python pi/gui.py
 ```
 
 ## Contributing
